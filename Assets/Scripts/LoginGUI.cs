@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Net;
+using System.Net.Mail;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
 public class LoginGUI : MonoBehaviour
 {
@@ -12,6 +16,8 @@ public class LoginGUI : MonoBehaviour
     public string inputUsername;
     public string inputPassword;
     public string inputEmail;
+
+    public string eMail;
 
     public string notify = "";
 
@@ -33,7 +39,9 @@ public class LoginGUI : MonoBehaviour
     {
         LOGIN = 0,
         SIGNUP = 1,
-        GAME = 2
+        RESET = 2,
+        GAME = 3,
+        
     };
 
 
@@ -42,7 +50,7 @@ public class LoginGUI : MonoBehaviour
     {
         screenX = Screen.width / aspectX;
         screenY = Screen.height / aspectY;
-        
+
     }
     void OnGUI()
     {
@@ -79,6 +87,13 @@ public class LoginGUI : MonoBehaviour
             {
                 notify = "";
                 StartCoroutine(LoginUser(inputUsername, inputPassword));
+            }
+            if(GUI.Button(new Rect(screenX * 5.5f, screenY * 6.25f, screenX * 2.25f, screenY * 0.25f), "Forgot Password?"))
+            {
+                inputUsername = "";
+                inputPassword = "";
+                menuState = MENU.RESET;
+                notify = "";
             }
 
 
@@ -127,6 +142,27 @@ public class LoginGUI : MonoBehaviour
                     notify = "Please enter all required information!";
                 }
             }
+        }
+        else if (menuState == MENU.RESET)
+        {
+            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
+            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
+            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
+            if (notify != "")
+            {
+                GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
+            }
+            GUI.Box(new Rect(screenX * 3.25f, screenY * 2.75f, screenX * 4.5f, screenY * 0.5f), "Forgot Password?");
+
+            GUI.Label(new Rect(screenX * 3.25f, screenY * 3.75f, screenX * 4.5f, screenY * 0.5f), "Email");
+
+            inputEmail = GUI.TextField(new Rect(screenX * 3.25f, screenY * 4f, screenX * 4.5f, screenY * 0.5f), inputEmail, 24, textfieldStyling);
+
+            if (GUI.Button(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "Send Email"))
+            {
+                ResetUser(inputEmail);
+            }
+
         }
         else if (menuState == MENU.GAME)
         {
@@ -180,5 +216,27 @@ public class LoginGUI : MonoBehaviour
         {
             notify = databaseCallback.text;
         }
+    }
+    void ResetUser(string _email)
+    {
+
+        MailMessage mail = new MailMessage();
+
+        mail.From = new MailAddress("sqlunityclasssydney@gmail.com");
+        mail.To.Add(_email);
+        mail.Subject = "Reset Account";
+        mail.Body = "Hey Scrub, You done did fucked...reset HERE";
+        //Simple Mail Transfer Protocol
+        SmtpClient smtpServer = new SmtpClient("smtp.gmail.com");
+        smtpServer.Port = 25;
+        smtpServer.Credentials = new NetworkCredential("sqlunityclasssydney@gmail.com", "sqlpassword") as ICredentialsByHost;
+        smtpServer.EnableSsl = true;
+
+        ServicePointManager.ServerCertificateValidationCallback = delegate
+        (object s, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        { return true; };
+
+        smtpServer.Send(mail);
+        Debug.Log("Success");
     }
 }
