@@ -16,10 +16,12 @@ public class LoginGUI : MonoBehaviour
     public string inputUsername;
     public string inputPassword;
     public string inputEmail;
+    public string inputCode;
 
     public string eMail;
 
     public string notify = "";
+    private string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private bool incorrectUsername;
     private bool incorrectPassword;
@@ -27,6 +29,10 @@ public class LoginGUI : MonoBehaviour
 
     public float timer = 0;
     public float maxTime = 3f;
+
+    private bool sentEmail = false;
+    private string backupEmail;
+    private string confirmPass = "";
 
 
 
@@ -40,8 +46,9 @@ public class LoginGUI : MonoBehaviour
         LOGIN = 0,
         SIGNUP = 1,
         RESET = 2,
-        GAME = 3,
-        
+        NEWPASS = 3,
+        GAME = 4,
+
     };
 
 
@@ -88,7 +95,7 @@ public class LoginGUI : MonoBehaviour
                 notify = "";
                 StartCoroutine(LoginUser(inputUsername, inputPassword));
             }
-            if(GUI.Button(new Rect(screenX * 5.5f, screenY * 6.25f, screenX * 2.25f, screenY * 0.25f), "Forgot Password?"))
+            if (GUI.Button(new Rect(screenX * 5.5f, screenY * 6.25f, screenX * 2.25f, screenY * 0.25f), "Forgot Password?"))
             {
                 inputUsername = "";
                 inputPassword = "";
@@ -122,10 +129,7 @@ public class LoginGUI : MonoBehaviour
 
             if (GUI.Button(new Rect(screenX * 3.25f, screenY * 6.75f, screenX * 2.25f, screenY * 0.5f), "Back"))
             {
-                inputUsername = "";
-                inputEmail = "";
-                inputPassword = "";
-                notify = "";
+                ResetInputs();
                 menuState = MENU.LOGIN;
 
             }
@@ -145,6 +149,7 @@ public class LoginGUI : MonoBehaviour
         }
         else if (menuState == MENU.RESET)
         {
+
             GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
             GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
             GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
@@ -153,22 +158,85 @@ public class LoginGUI : MonoBehaviour
                 GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
             }
             GUI.Box(new Rect(screenX * 3.25f, screenY * 2.75f, screenX * 4.5f, screenY * 0.5f), "Forgot Password?");
-
-            GUI.Label(new Rect(screenX * 3.25f, screenY * 3.75f, screenX * 4.5f, screenY * 0.5f), "Email");
-
-            inputEmail = GUI.TextField(new Rect(screenX * 3.25f, screenY * 4f, screenX * 4.5f, screenY * 0.5f), inputEmail, 24, textfieldStyling);
-
-            if (GUI.Button(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "Send Email"))
+            if (!sentEmail)
             {
-                ResetUser(inputEmail);
+                GUI.Label(new Rect(screenX * 3.25f, screenY * 3.75f, screenX * 4.5f, screenY * 0.5f), "Email");
+
+                inputEmail = GUI.TextField(new Rect(screenX * 3.25f, screenY * 4f, screenX * 4.5f, screenY * 0.5f), inputEmail, 24, textfieldStyling);
+
+                if (GUI.Button(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "Send Email"))
+                {
+                    backupEmail = inputEmail;
+                    StartCoroutine("ResetUser", inputEmail);
+                    sentEmail = true;
+                }
+            }
+            else if (sentEmail)
+            {
+                GUI.Label(new Rect(screenX * 3.25f, screenY * 3.75f, screenX * 4.5f, screenY * 0.5f), "Reset Code");
+
+                inputCode = GUI.TextField(new Rect(screenX * 3.25f, screenY * 4f, screenX * 4.5f, screenY * 0.5f), inputCode, 5, textfieldStyling);
+
+                if (GUI.Button(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "Submit Code"))
+                {
+                    StartCoroutine(CheckCode(inputCode, inputEmail));
+                }
             }
 
+        }
+        else if (menuState == MENU.NEWPASS)
+        {
+
+            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
+            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
+            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
+            if (notify != "")
+            {
+                GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
+            }
+            GUI.Box(new Rect(screenX * 3.25f, screenY * 2.75f, screenX * 4.5f, screenY * 0.5f), "Reset Password");
+
+            GUI.Label(new Rect(screenX * 3.25f, screenY * 3.75f, screenX * 4.5f, screenY * 0.5f), "Email");
+            GUI.Label(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "New Password");
+            GUI.Label(new Rect(screenX * 3.25f, screenY * 5.75f, screenX * 4.5f, screenY * 0.5f), "Confirm Password");
+
+            GUI.Box(new Rect(screenX * 3.25f, screenY * 4f, screenX * 4.5f, screenY * 0.5f), inputEmail, textfieldStyling);
+            inputPassword = GUI.PasswordField(new Rect(screenX * 3.25f, screenY * 5f, screenX * 4.5f, screenY * 0.5f), inputPassword, "*"[0], 24, textfieldStyling);
+            confirmPass = GUI.PasswordField(new Rect(screenX * 3.25f, screenY * 6f, screenX * 4.5f, screenY * 0.5f), confirmPass, "*"[0], 24, textfieldStyling);
+
+            if (GUI.Button(new Rect(screenX * 3.25f, screenY * 6.5f, screenX * 4.5f, screenY * 0.5f), "Set new Password"))
+            {
+                if (confirmPass == inputPassword)
+                {
+                    StartCoroutine(ResetPassword(confirmPass, inputEmail, inputCode));
+                    confirmPass = "";
+                    inputPassword = "";
+                }
+                else
+                {
+                    notify = "Passwords do not match!";
+                    inputPassword = "";
+                    confirmPass = "";
+                }
+            }
         }
         else if (menuState == MENU.GAME)
         {
             SceneManager.LoadScene("GameScene");
         }
     }
+
+    void ResetInputs()
+    {
+        inputCode = "";
+        inputEmail = "";
+        inputPassword = "";
+        inputUsername = "";
+        sentEmail = false;
+        confirmPass = "";
+        notify = "";
+    }
+
     IEnumerator CreateUser(string _username, string _email, string _password)
     {
         string dataLocation = "http://localhost/loginsystem/insertuser.php";
@@ -192,9 +260,7 @@ public class LoginGUI : MonoBehaviour
         }
         if (databasecallback.text == "Created User" || databasecallback.text == "Create First User")
         {
-            inputUsername = "";
-            inputEmail = "";
-            inputPassword = "";
+            ResetInputs();
             menuState = MENU.LOGIN;
         }
         #endregion
@@ -217,15 +283,28 @@ public class LoginGUI : MonoBehaviour
             notify = databaseCallback.text;
         }
     }
-    void ResetUser(string _email)
+    IEnumerator ResetUser(string _email)
     {
+        string dataLocation = "http://localhost/loginsystem/sendcode.php";
+        string code = "";
+        for (int i = 0; i < 5; i++)
+        {
+            int letter = Random.Range(0, characters.Length);
+            code += characters[letter];
+        }
+
+        WWWForm user = new WWWForm();
+        user.AddField("email_Post", _email);
+        user.AddField("resetcode_Post", code);
+        WWW databaseCallback = new WWW(dataLocation, user);
+        yield return databaseCallback;
 
         MailMessage mail = new MailMessage();
 
         mail.From = new MailAddress("sqlunityclasssydney@gmail.com");
         mail.To.Add(_email);
-        mail.Subject = "Reset Account";
-        mail.Body = "Hey Scrub, You done did fucked...reset HERE";
+        mail.Subject = "Account Reset";
+        mail.Body = "Your reset code is: " + code;
         //Simple Mail Transfer Protocol
         SmtpClient smtpServer = new SmtpClient("smtp.gmail.com");
         smtpServer.Port = 25;
@@ -237,6 +316,47 @@ public class LoginGUI : MonoBehaviour
         { return true; };
 
         smtpServer.Send(mail);
-        Debug.Log("Success");
+        Debug.Log("Email Sent Successfully");
     }
+    IEnumerator CheckCode(string _code, string _email)
+    {
+        string dataLocation = "http://localhost/loginsystem/checkcode.php";
+        WWWForm user = new WWWForm();
+        user.AddField("email_Post", _email);
+        user.AddField("resetcode_Post", _code);
+        WWW databaseCallback = new WWW(dataLocation, user);
+        yield return databaseCallback;
+        Debug.Log(databaseCallback.text);
+        if (databaseCallback.text == "Success")
+        {
+            notify = "Code Successful";
+            menuState = MENU.NEWPASS;
+        }
+        else if (databaseCallback.text == "Reset Code Incorrect")
+        {
+            notify = "Code Incorrect, Try again!";
+        }
+    }
+    IEnumerator ResetPassword(string _password, string _email, string _code)
+    {
+        string dataLocation = "http://localhost/loginsystem/resetpassword.php";
+        WWWForm user = new WWWForm();
+        user.AddField("email_Post", _email);
+        user.AddField("password_Post", _password);
+        user.AddField("resetcode_Post", _code);
+        WWW databaseCallback = new WWW(dataLocation, user);
+        yield return databaseCallback;
+        Debug.Log(databaseCallback.text);
+        if (databaseCallback.text == "Password Changed")
+        {
+            notify = "Password Updated!";
+            ResetInputs();
+            menuState = MENU.LOGIN;
+        }
+        else if (databaseCallback.text == "error")
+        {
+            notify = "Failure!";
+        }
+    }
+
 }

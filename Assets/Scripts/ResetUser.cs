@@ -9,8 +9,8 @@ public class ResetUser : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-		
-	}
+        
+    }
 	
 	// Update is called once per frame
 	void Update () {
@@ -18,6 +18,6 @@ public class ResetUser : MonoBehaviour {
 	}
     void OnGUI()
     {
-        
     }
+
 }
