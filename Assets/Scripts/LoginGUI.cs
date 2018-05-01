@@ -234,7 +234,6 @@ public class LoginGUI : MonoBehaviour
     IEnumerator CreateUser(string _username, string _email, string _password)
     {
         string dataLocation = "http://localhost/loginsystem/insertuser.php";
-        PasswordEncrypt.MD5Hash(_password);
 
         WWWForm user = new WWWForm();
         user.AddField("username_Post", _username);
