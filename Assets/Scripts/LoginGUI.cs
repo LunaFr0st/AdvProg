@@ -13,16 +13,17 @@ public class LoginGUI : MonoBehaviour
     int aspectX = 16, aspectY = 9;
     private MENU menuState;
 
+    [Header("Inputs")]
     public string inputUsername;
     public string inputPassword;
     public string inputEmail;
     public string inputCode;
-
     public string eMail;
-
+    [Header("Strings")]
     public string notify = "";
     private string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    [Header("Missing Info")]
     private bool incorrectUsername;
     private bool incorrectPassword;
     private bool missingEmail;
@@ -33,12 +34,12 @@ public class LoginGUI : MonoBehaviour
     private bool sentEmail = false;
     private string backupEmail;
     private string confirmPass = "";
-
+    public string encryptKey = "8C4EE";
 
 
     [Header("GUI Styling")]
     public GUIStyle textfieldStyling = new GUIStyle();
-
+    
 
     //Menu Selector
     public enum MENU
@@ -51,7 +52,6 @@ public class LoginGUI : MonoBehaviour
 
     };
 
-
     //GUI Elements
     void Update()
     {
@@ -61,14 +61,13 @@ public class LoginGUI : MonoBehaviour
     }
     void OnGUI()
     {
+        
         textfieldStyling.fontSize = screenX / 3;
-
+        GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
+        GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
+        GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
         if (menuState == MENU.LOGIN)
         {
-            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
-            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
-            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
-
             GUI.Box(new Rect(screenX * 3.25f, screenY * 2.75f, screenX * 4.5f, screenY * 0.5f), "Login");
 
             if (notify != "")
@@ -109,9 +108,6 @@ public class LoginGUI : MonoBehaviour
         }
         else if (menuState == MENU.SIGNUP)
         {
-            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
-            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
-            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
             if (notify != "")
             {
                 GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
@@ -136,23 +132,25 @@ public class LoginGUI : MonoBehaviour
             if (GUI.Button(new Rect(screenX * 5.5f, screenY * 6.75f, screenX * 2.25f, screenY * 0.5f), "Register"))
             {
                 notify = "";
-                if (inputEmail != "" && inputPassword != "" && inputUsername != "")
+                if (inputEmail.Contains("@") && inputEmail.Contains("."))
                 {
-                    StartCoroutine(CreateUser(inputUsername, inputEmail, inputPassword));
-
+                    if (inputEmail != "" && inputPassword != "" && inputUsername != "")
+                    {
+                        StartCoroutine(CreateUser(inputUsername, inputEmail, inputPassword));
+                    }
+                    else
+                    {
+                        notify = "Please enter all required information!";
+                    }
                 }
                 else
                 {
-                    notify = "Please enter all required information!";
+                    notify = "Email invalid";
                 }
             }
         }
         else if (menuState == MENU.RESET)
         {
-
-            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
-            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
-            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
             if (notify != "")
             {
                 GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
@@ -167,7 +165,7 @@ public class LoginGUI : MonoBehaviour
                 if (GUI.Button(new Rect(screenX * 3.25f, screenY * 4.75f, screenX * 4.5f, screenY * 0.5f), "Send Email"))
                 {
                     backupEmail = inputEmail;
-                    StartCoroutine("ResetUser", inputEmail);
+                    StartCoroutine(ResetUser(inputEmail));
                     sentEmail = true;
                 }
             }
@@ -186,10 +184,6 @@ public class LoginGUI : MonoBehaviour
         }
         else if (menuState == MENU.NEWPASS)
         {
-
-            GUI.Box(new Rect(-screenX, 0, screenX * 20, screenY * 0.75f), ""); // Top Banner
-            GUI.Box(new Rect(-screenX, screenY * 8.45f, screenX * 20, screenY * 0.75f), ""); // Bottom Banner
-            GUI.Box(new Rect(screenX * 3, screenY * 0.75f, screenX * 5, screenY * 7.71f), ""); // Offcentered Text Area
             if (notify != "")
             {
                 GUI.Box(new Rect(screenX * 3.25f, screenY * 2.25f, screenX * 4.5f, screenY * 0.5f), notify);
@@ -240,6 +234,8 @@ public class LoginGUI : MonoBehaviour
     IEnumerator CreateUser(string _username, string _email, string _password)
     {
         string dataLocation = "http://localhost/loginsystem/insertuser.php";
+        PasswordEncrypt.MD5Hash(_password);
+
         WWWForm user = new WWWForm();
         user.AddField("username_Post", _username);
         user.AddField("email_Post", _email);
@@ -277,6 +273,7 @@ public class LoginGUI : MonoBehaviour
         if (databaseCallback.text == "Success")
         {
             notify = "Login Successful";
+            menuState = MENU.GAME;
         }
         else if (databaseCallback.text == "Password Incorrect" || databaseCallback.text == "Username Incorrect")
         {
