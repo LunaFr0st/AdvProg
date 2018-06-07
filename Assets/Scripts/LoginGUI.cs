@@ -299,11 +299,11 @@ public class LoginGUI : MonoBehaviour
 
         mail.From = new MailAddress("sqlunityclasssydney@gmail.com");
         mail.To.Add(_email);
-        mail.Subject = "Account Reset";
+        mail.Subject = "Account Reset Code";
         mail.Body = "Your reset code is: " + code;
         //Simple Mail Transfer Protocol
         SmtpClient smtpServer = new SmtpClient("smtp.gmail.com");
-        smtpServer.Port = 25;
+        smtpServer.Port = 587;
         smtpServer.Credentials = new NetworkCredential("sqlunityclasssydney@gmail.com", "sqlpassword") as ICredentialsByHost;
         smtpServer.EnableSsl = true;
 
